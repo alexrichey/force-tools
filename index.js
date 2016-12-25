@@ -7,7 +7,7 @@ app.get('/', function (req, res) {
   res.send('Hello World!');
 });
 
-app.use('/completions', function (req, res, next) {
+app.use('/complete/me', function (req, res, next) {
   console.log(lightning.ui);
   res.send({"objects":[
     {'Name': 'Tester'},
