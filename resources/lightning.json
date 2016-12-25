@@ -1,0 +1,41 @@
+{
+  "events": {
+    "aura": {},
+    "auraStorage": {},
+    "performance": {},
+    "testCustomNS1": {},
+    "testCustomNS2": {},
+    "testPrivilegedNS1": {},
+    "testPrivilegedNS2": {},
+    "ui": {}
+  },
+
+  "applications": {
+    "appCache": {},
+    "aura": {},
+    "auradev": {},
+    "performance": {},
+    "provider": {},
+    "uiExamples": {}
+  },
+
+  "components": {
+    "appCache": {},
+    "aura": {},
+    "auraStorage": {},
+    "auradev": {},
+    "cmpQueryLanguage": {},
+    "integrationService": {},
+    "lockerTestOtherNamespace": {},
+    "performance": {},
+    "provider": {},
+    "testCustomNS1": {},
+    "testCustomNS2": {},
+    "testPrivilegedNS1": {},
+    "testPrivilegedNS2": {},
+    "ui": {},
+    "uiExamples": {},
+    "valueChange": {}
+  }
+  
+}
