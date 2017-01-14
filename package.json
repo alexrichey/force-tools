@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "express":"*"
+    "express":"*",
+    "jsonfile":"*",
+    "jsforce":"*"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
