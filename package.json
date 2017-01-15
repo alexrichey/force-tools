@@ -6,7 +6,8 @@
   "dependencies": {
     "express":"*",
     "jsonfile":"*",
-    "jsforce":"*"
+    "jsforce":"*",
+    "pug":"*"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

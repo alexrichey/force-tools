@@ -1,9 +1,12 @@
 var express = require('express'),
-    setSymbolTable = require('./test.js'),
-    app = express(),
-    symbolTable = {},
-    lightning = require('./resources/lightning.json');
+    jsforceWrapper = require('./jsforce-wrapper.js'),
+    lightning = require('./resources/lightning.json'),
+    symbolTableHelper = require('./symbol-table-helper.js');
 
+app = express();
+
+app.set('view engine', 'pug');
+app.use(express.static('public'));
 
 function getComponents () {
   var components = lightning.components;
@@ -21,12 +24,29 @@ function getComponents () {
   return completions;
 };
 
+app.get('/', function (req, res) {
+  res.render('index', { title: 'Force Tools', message: 'Use the force, Luke!' });
+});
+
 app.use('/complete/me', function (req, res, next) {
   res.send(getComponents());
 });
 
-app.use('/gen-symboltable', function (req, res, next) {
-  setSymbolTable(res.send);
+app.use('/refresh-symbol-table', function (req, res, next) {
+  jsforceWrapper(console.log);
+  res.send('hi there');
+});
+
+app.use('/api/complete', function (req, res, next) {
+  var methodName = req.query.name;
+  var methods = symbolTableHelper.getClassMethods(methodName);
+  res.send(methods);
+});
+
+app.use('/complete', function (req, res, next) {
+  var methodName = req.query.name;
+  var methods = symbolTableHelper.getClassMethods(methodName);
+  res.render('methods', { title: 'Class Methods', methods: methods});
 });
 
 app.listen(8080, function () {
