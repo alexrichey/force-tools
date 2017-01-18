@@ -1,6 +1,7 @@
 var express = require('express'),
     jsforceWrapper = require('./jsforce-wrapper.js'),
     lightning = require('./resources/lightning.json'),
+    vf = require('./resources/visualforce.json'),
     symbolTableHelper = require('./symbol-table-helper.js');
 
 app = express();
@@ -44,9 +45,29 @@ app.use('/api/complete', function (req, res, next) {
 });
 
 app.use('/complete', function (req, res, next) {
-  var methodName = req.query.name;
-  var methods = symbolTableHelper.getClassMethods(methodName);
-  res.render('methods', { title: 'Class Methods', methods: methods});
+  console.log('request to: ' + JSON.stringify(req.query));
+  var type = req.query.type;
+
+  if (type === 'vf') {
+    res.send(vf.components);
+  } else if (type === 'classes') {
+    console.log(req.query);
+    var className = req.query.className;
+    if (className) {
+      console.log('searching for class methods on ' + className);
+      var symbols = symbolTableHelper.getClassMethods(className);
+      res.send(symbols);
+    } else {
+      res.send(symbolTableHelper.getClasses());
+    }
+  } else if (type === 'ui'){
+    res.send(getComponents());
+  }
+  else {
+    // var methodName = req.query.name;
+    // var methods = symbolTableHelper.getClassMethods(methodName);
+    // res.render('methods', { title: 'Class Methods', methods: methods});
+  }
 });
 
 app.listen(8080, function () {

@@ -21,18 +21,25 @@ function setClassCache () {
 };
 
 function getSymbolsForClass (className) {
-   return st.records.filter(function (symbolTableEntry) {
+  return st.records.filter(function (symbolTableEntry) {
     return symbolTableEntry['Name'] === className;
   })[0];
 };
 
+function getClasses (className) {
+  return st.records.map(function (symbolTableEntry) {
+    return symbolTableEntry['Name'];
+  });
+};
+
 function getClassMethods (className) {
   var symbols = getSymbolsForClass(className);
-  return symbols['SymbolTable']['methods'];
-}
+  if (symbols) {
+    return symbols['SymbolTable']['methods'].map(JSON.stringify);
+  } else {
+    return [];
+  }
+};
 
-function formattedMethodOutput(method) {
-  
-}
-
-module.exports = {getClassMethods: getClassMethods};
+module.exports = {getClassMethods: getClassMethods,
+                  getClasses: getClasses};
