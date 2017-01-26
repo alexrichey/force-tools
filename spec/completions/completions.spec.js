@@ -9,6 +9,6 @@ describe("Completions", function() {
   it('Should be able to complete basic object lookups', function() {
     expect(engine.complete({context : "Lead."})).toEqual(['email', 'first_name']);
     expect(engine.complete({context : "Lead.em"})).toEqual(['email']);
-    expect(engine.complete({context : "Lead.emails"})).toEqual(['email']);
+    expect(engine.complete({context : "Lead.emails"})).toEqual([]);
   });
 });
