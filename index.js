@@ -1,4 +1,4 @@
-var symbolTable = require('./symbol-table');
+var symbolTable = require('./app/symbol-table');
 
 var testMethod = symbolTable.getClassMethods('TestJIRAMapper')[1];
 

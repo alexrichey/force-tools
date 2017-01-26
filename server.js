@@ -47,7 +47,7 @@ app.use('/api/complete', function (req, res, next) {
   res.send(methods);
 });
 
-app.use('/complete', function (req, res, next) {
+app.use('/old/complete', function (req, res, next) {
   console.log('request to: ' + JSON.stringify(req.query));
   var type = req.query.type;
 

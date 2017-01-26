@@ -1,0 +1,21 @@
+{
+  "objects": {
+    "Lead" : {
+      "fields" : {
+        "email" : {
+        },
+
+        "first_name" : {
+        }
+      }
+    },
+
+    "Contact" : {
+      "fields" : {
+
+      }
+    }
+
+
+  }
+}
