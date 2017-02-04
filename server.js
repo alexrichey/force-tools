@@ -62,12 +62,11 @@ app.use('/complete', function (req, res, next) {
   console.log('completing for ' + req.query.filter);
   var completions;
   if (engine) {
-    completions = engine.completeClasses({filters : req.query.filter});
+    completions = engine.completeClasses({filter : req.query.filter});
     res.render('completions', {title: "Completions", completions: completions}) ;
   } else {
     console.log('no engine');
-    completions = [];
-    res.render('completions', {title: "Completions", completions: completions}) ;
+    res.render('completions', {title: "Completions", completions: []}) ;
   }
 });
 
