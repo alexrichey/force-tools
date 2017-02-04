@@ -1,9 +1,6 @@
-html
-  head
-    link(rel='stylesheet' href='/common.css', type='text/css')
-    script(src="/index.js")
-    title= title
-  body
-    h1= message
-    p= username
-    button(onclick="app.refreshSymbolTable()")= "Refresh Symbol Table"
+extends base.pug
+
+block body
+  h1= message
+  p= username
+  button(onclick="app.refreshSymbolTable()")= "Refresh Symbol Table"

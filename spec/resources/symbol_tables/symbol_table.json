@@ -1,0 +1,221 @@
+{
+  "size": 2,
+  "totalSize": 2,
+  "done": true,
+  "queryLocator": null,
+  "entityTypeName": "ApexClass",
+  "records": [
+    {
+      "attributes": {
+        "type": "ApexClass",
+        "url": "/services/data/v37.0/tooling/sobjects/ApexClass/01pd0000003rV2dAAE"
+      },
+      "Id": "01pd0000003rV2dAAE",
+      "Name": "MockClassOther",
+      "SymbolTable": {
+        "constructors": [
+          {
+            "annotations": [],
+            "location": {
+              "column": 12,
+              "line": 5
+            },
+            "modifiers": [
+              "public"
+            ],
+            "name": "MockClassOther",
+            "parameters": [],
+            "references": [],
+            "type": null
+          }
+        ],
+        "externalReferences": [],
+        "id": "01pd0000003rV2dAAE",
+        "innerClasses": [],
+        "interfaces": [],
+        "key": "01pd0000003rV2dAAE",
+        "methods": [],
+        "name": "MockClassOther",
+        "namespace": null,
+        "parentClass": "",
+        "properties": [
+          {
+            "annotations": [],
+            "location": {
+              "column": 23,
+              "line": 2
+            },
+            "modifiers": [
+              "private"
+            ],
+            "name": "mc1",
+            "references": [],
+            "type": "MockClass"
+          },
+          {
+            "annotations": [],
+            "location": {
+              "column": 23,
+              "line": 3
+            },
+            "modifiers": [
+              "private"
+            ],
+            "name": "mc2",
+            "references": [],
+            "type": "MockClass"
+          }
+        ],
+        "tableDeclaration": {
+          "annotations": [],
+          "location": {
+            "column": 14,
+            "line": 1
+          },
+          "modifiers": [
+            "public"
+          ],
+          "name": "MockClassOther",
+          "references": [],
+          "type": "MockClassOther"
+        },
+        "variables": []
+      }
+    },
+    {
+      "attributes": {
+        "type": "ApexClass",
+        "url": "/services/data/v37.0/tooling/sobjects/ApexClass/01pd0000003rV2YAAU"
+      },
+      "Id": "01pd0000003rV2YAAU",
+      "Name": "MockClass",
+      "SymbolTable": {
+        "constructors": [
+          {
+            "annotations": [],
+            "location": {
+              "column": 12,
+              "line": 8
+            },
+            "modifiers": [
+              "public"
+            ],
+            "name": "MockClass",
+            "parameters": [],
+            "references": [],
+            "type": null
+          },
+          {
+            "annotations": [],
+            "location": {
+              "column": 12,
+              "line": 12
+            },
+            "modifiers": [
+              "public"
+            ],
+            "name": "MockClass",
+            "parameters": [
+              {
+                "name": "setMe",
+                "type": "Boolean"
+              }
+            ],
+            "references": [],
+            "type": null
+          }
+        ],
+        "externalReferences": [],
+        "id": "01pd0000003rV2YAAU",
+        "innerClasses": [],
+        "interfaces": [],
+        "key": "01pd0000003rV2YAAU",
+        "methods": [],
+        "name": "MockClass",
+        "namespace": null,
+        "parentClass": "",
+        "properties": [
+          {
+            "annotations": [],
+            "location": {
+              "column": 20,
+              "line": 4
+            },
+            "modifiers": [
+              "public"
+            ],
+            "name": "trueOrFalse",
+            "references": [],
+            "type": "Boolean"
+          },
+          {
+            "annotations": [],
+            "location": {
+              "column": 17,
+              "line": 5
+            },
+            "modifiers": [
+              "public"
+            ],
+            "name": "testLead",
+            "references": [],
+            "type": "Lead"
+          },
+          {
+            "annotations": [],
+            "location": {
+              "column": 20,
+              "line": 6
+            },
+            "modifiers": [
+              "public"
+            ],
+            "name": "testContact",
+            "references": [],
+            "type": "Contact"
+          },
+          {
+            "annotations": [],
+            "location": {
+              "column": 26,
+              "line": 3
+            },
+            "modifiers": [
+              "static",
+              "public"
+            ],
+            "name": "GREETING",
+            "references": [],
+            "type": "String"
+          }
+        ],
+        "tableDeclaration": {
+          "annotations": [],
+          "location": {
+            "column": 14,
+            "line": 1
+          },
+          "modifiers": [
+            "public"
+          ],
+          "name": "MockClass",
+          "references": [],
+          "type": "MockClass"
+        },
+        "variables": [
+          {
+            "annotations": [],
+            "location": {
+              "column": 30,
+              "line": 12
+            },
+            "modifiers": [],
+            "name": "setMe",
+            "references": [],
+            "type": "Boolean"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 var express = require('express'),
     fs = require('fs'),
     jsforceWrapper = require('./app/jsforce-wrapper.js'),
-    symbolTableHelper = require('./app/symbol-table.js'),
-    completionEngine = require('./app/completion.js');
+    classSymbolTable = require('./resources/symbol_table.json'),
+    completionEngine = require('./app/completion.js'),
     config =    JSON.parse(fs.readFileSync('./config.json')),
     lightning = JSON.parse(fs.readFileSync('./resources/lightning.json', 'utf8')),
     vf =        JSON.parse(fs.readFileSync('./resources/visualforce.json', 'utf8'));
@@ -11,6 +11,16 @@ app = express();
 
 app.set('view engine', 'pug');
 app.use(express.static('public'));
+
+function initEngine(st) {
+  try {
+    engine = new completionEngine({classSymbolTable: st});
+    console.log('engine successfully created');
+  } catch(e) {
+    console.log('Error loading symbol table!');
+  }
+};
+initEngine(classSymbolTable);
 
 function getComponents () {
   var components = lightning.components;
@@ -48,10 +58,17 @@ app.use('/api/complete', function (req, res, next) {
   res.send(methods);
 });
 
-
 app.use('/complete', function (req, res, next) {
-  var completions = ['this', 'that'];
-  res.render('completions', {title: "Completions", completions: completions}) ;
+  console.log('completing for ' + req.query.filter);
+  var completions;
+  if (engine) {
+    completions = engine.completeClasses({filters : req.query.filter});
+    res.render('completions', {title: "Completions", completions: completions}) ;
+  } else {
+    console.log('no engine');
+    completions = [];
+    res.render('completions', {title: "Completions", completions: completions}) ;
+  }
 });
 
 app.use('/old/complete', function (req, res, next) {

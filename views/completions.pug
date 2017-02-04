@@ -3,6 +3,10 @@ extends base.pug
 block body
   div
     p Here are the completions for
-    input(placeholder="yo")
-    each completion in completions
-      div= completion
+    input(class="classSearch", placeholder="yo, complete me")
+    button Search!
+    p
+    table
+      each completion in completions
+        tr
+          td= completion
