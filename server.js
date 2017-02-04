@@ -2,6 +2,7 @@ var express = require('express'),
     fs = require('fs'),
     jsforceWrapper = require('./app/jsforce-wrapper.js'),
     symbolTableHelper = require('./app/symbol-table.js'),
+    completionEngine = require('./app/completion.js');
     config =    JSON.parse(fs.readFileSync('./config.json')),
     lightning = JSON.parse(fs.readFileSync('./resources/lightning.json', 'utf8')),
     vf =        JSON.parse(fs.readFileSync('./resources/visualforce.json', 'utf8'));
@@ -45,6 +46,12 @@ app.use('/api/complete', function (req, res, next) {
   var methodName = req.query.name;
   var methods = symbolTableHelper.getClassMethods(methodName);
   res.send(methods);
+});
+
+
+app.use('/complete', function (req, res, next) {
+  var completions = ['this', 'that'];
+  res.render('completions', {title: "Completions", completions: completions}) ;
 });
 
 app.use('/old/complete', function (req, res, next) {
