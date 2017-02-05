@@ -2,18 +2,16 @@ function completionEngine(args) {
   this.objectsSymbolTable = args.objectsSymbolTable;
   this.classSymbolTable = args.classSymbolTable;
 
-  this.lookupRules = {
-    'class/obj->attr' : {
+  this.lookupRules = [
+    {'name' : 'class/obj->attr',
       'path': [['class', 'attr'], ['object', 'attr']],
-      'regex' : /[\w]*\.[\w]*/,
-      'description' : 'Looking up an object, then the attributes'
-    },
-    'class/obj' : {
+      'regex' : /^[\w]*\.[\w]*/,
+      'description' : 'Looking up an object, then the attributes'},
+    {'name' : 'class/obj',
       'path' : [['class'], ['object']],
-      'regex' : /[\w]*$/,
-      'description' : 'Looking up just an object or class'
-    }
-  };
+      'regex' : /^[\w]*$/,
+      'description' : 'Looking up just an object or class'}
+  ];
 };
 
 completionEngine.prototype.completeObjects = function(request) {
@@ -40,7 +38,6 @@ completionEngine.prototype.completeObjects = function(request) {
 completionEngine.prototype.complete = function(request) {
   var filter = request.filter ? request.filter : '',
       filterType;
-  console.log('filter is: ', filter);
   try {
     if (filter === '') {
       return this.classSymbolTable.records.map(function(classTable) {
@@ -48,10 +45,9 @@ completionEngine.prototype.complete = function(request) {
       });
 
     } else {
-      filterType = this.processFilter(filter);
-      console.log(filterType);
+      filterType = this.findMatchingRules(filter);
 
-      if (filterType.length > 0) {
+      if (true) {
         return this.classSymbolTable.records.reduce(function(acc, classTable) {
           if (classTable.Name.indexOf(filter) === 0) {
             return acc.concat(classTable.Name);
@@ -71,19 +67,20 @@ completionEngine.prototype.complete = function(request) {
   }
 };
 
-completionEngine.prototype.processFilter = function(filter) {
+completionEngine.prototype.findMatchingRules = function(filter) {
+  var lookupRules = [];
   try {
-    var container_attr_regex = /[\w]*\.[\w]*/,
-        class_obj_regex =      /[\w]*$/;
-    if (filter.match(container_attr_regex)) {
-      return [['class', 'attr'], ['object', 'attr']];
-    } else if (filter.match(class_obj_regex))  {
-      return [['class'], ['object']];
+    for(var i = 0; i < this.lookupRules.length; i++) {
+      var lookupRule = this.lookupRules[i];
+      if (filter.match(lookupRule.regex)) {
+        console.log(filter + ' matched ' + lookupRule.name);
+        lookupRules.push(lookupRule);
+      }
     }
-    return [];
   } catch(e) {
     console.log(e);
   }
+  return lookupRules;
 };
 
 completionEngine.prototype.runFilter = function(filterPaths) {
