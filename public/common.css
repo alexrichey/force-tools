@@ -5,3 +5,7 @@ body {
 table {
     outline-style: dotted;
 }
+
+div.header a {
+    margin-right: 10px;
+}

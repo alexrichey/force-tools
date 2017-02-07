@@ -2,15 +2,20 @@ function completionEngine(args) {
   this.objectsSymbolTable = args.objectsSymbolTable;
   this.classSymbolTable = args.classSymbolTable;
 
-  this.lookupRules = [
-    {'name' : 'class/obj->attr',
-      'path': [['class', 'attr'], ['object', 'attr']],
-      'regex' : /^[\w]*\.[\w]*/,
-      'description' : 'Looking up an object, then the attributes'},
+  this.matchingRules = [
     {'name' : 'class/obj',
-      'path' : [['class'], ['object']],
-      'regex' : /^[\w]*$/,
-      'description' : 'Looking up just an object or class'}
+     'path' : [['class'], ['object']],
+     'regex' : /^[\w]*$/,
+     'description' : 'Looking up just an object or class',
+     'fn' : this.findClasses
+    },
+    {'name' : 'class/obj->member',
+     'path': [['class', 'member'], ['object', 'member']],
+     'regex' : /^[\w]*\.[\w]*/,
+     'description' : 'Looking up an object, then the member',
+     'fn' : this.findClasses,
+     'cb' : this.findMethods
+    }
   ];
 };
 
@@ -23,7 +28,7 @@ completionEngine.prototype.completeObjects = function(request) {
 
     fields = Object.keys(fieldData);
     if (fieldAbbrev !== '') {
-      fields = fields.filter(function(field) {
+      fields = fields.query(function(field) {
         return field.lastIndexOf(fieldAbbrev) === 0;
       });
     }
@@ -36,55 +41,69 @@ completionEngine.prototype.completeObjects = function(request) {
 };
 
 completionEngine.prototype.complete = function(request) {
-  var filter = request.filter ? request.filter : '',
-      filterType;
+  var query = request.query ? request.query : '',
+      rules = [];
   try {
-    if (filter === '') {
-      return this.classSymbolTable.records.map(function(classTable) {
-        return classTable.Name;
-      });
-
+    if (query === '') {
+      return this.getUnfilteredClassesOrObjects();
     } else {
-      filterType = this.findMatchingRules(filter);
-
-      if (true) {
-        return this.classSymbolTable.records.reduce(function(acc, classTable) {
-          if (classTable.Name.indexOf(filter) === 0) {
-            return acc.concat(classTable.Name);
-          } else {
-            return acc;
-          }
-        }, []);
-
-      } else {
-        return [];
+      // We've got a query!
+      rules = this.findMatchingRules(query, this.executeSearchRules);
+      if (rules.length > 0) {
+        console.log('found %d matching rules', rules.length);
+        return this.executeSearchRule(query, rules);
       }
-
+      else {
+        console.log('found no matching rules for ', query);
+        return [];}
     }
   } catch (e) {
-    console.log(e);
     return [];
   }
 };
 
-completionEngine.prototype.findMatchingRules = function(filter) {
-  var lookupRules = [];
+completionEngine.prototype.getUnfilteredClassesOrObjects = function() {
+  return this.classSymbolTable.records.map(function(classTable) {
+    return classTable.Name;
+  });
+};
+
+completionEngine.prototype.findMatchingRules = function(query) {
+  var matchingRules = [];
   try {
-    for(var i = 0; i < this.lookupRules.length; i++) {
-      var lookupRule = this.lookupRules[i];
-      if (filter.match(lookupRule.regex)) {
-        console.log(filter + ' matched ' + lookupRule.name);
-        lookupRules.push(lookupRule);
+    for(var i = 0; i < this.matchingRules.length; i++) {
+      var rule = this.matchingRules[i];
+      if (query.match(rule.regex)) {
+        matchingRules.push(rule);
       }
     }
   } catch(e) {
     console.log(e);
   }
-  return lookupRules;
+  return matchingRules;
 };
 
-completionEngine.prototype.runFilter = function(filterPaths) {
+completionEngine.prototype.executeSearchRule = function(query, searchRules) {
+  console.log('executing');
+  if (searchRules[0].name == 'class/obj') {
+    return this.findClasses(query);
+  } else if (searchRules[0].name == 'class/obj->member') {
+    var results = this.findClasses(query);
+  } else {
+    console.log('no matching execution for', searchRules[0]);
+    return [];
+  }
+};
 
+completionEngine.prototype.findClasses = function(query) {
+  console.log('querying classes for', query);
+  return this.classSymbolTable.records.reduce(function(acc, classTable) {
+    if (classTable.Name.indexOf(query) === 0) {
+      return acc.concat(classTable.Name);
+    } else {
+      return acc;
+    }
+  }, []);
 };
 
 module.exports = completionEngine;
