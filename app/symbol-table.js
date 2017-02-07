@@ -3,7 +3,7 @@
 //     symbolTable = JSON.parse(fs.readFileSync(resourcesFile, 'utf8'));
 
 // function getSymbolsForClass (className) {
-//   return symbolTable.records.filter(function (symbolTableEntry) {
+//   return symbolTable.records.query(function (symbolTableEntry) {
 //     return symbolTableEntry['Name'] === className;
 //   })[0];
 // };

@@ -40,26 +40,23 @@ completionEngine.prototype.completeObjects = function(request) {
   }
 };
 
-completionEngine.prototype.complete = function(request) {
+completionEngine.prototype.complete = function(request, fn) {
   var query = request.query ? request.query : '',
-      rules = [];
-  try {
+      rules = [],
+      errors,
+      that = this;
+      returnData = [];
     if (query === '') {
-      return this.getUnfilteredClassesOrObjects();
+      returnData = this.getUnfilteredClassesOrObjects();
+      fn(null, returnData);
     } else {
       // We've got a query!
-      rules = this.findMatchingRules(query, this.executeSearchRules);
-      if (rules.length > 0) {
-        console.log('found %d matching rules', rules.length);
-        return this.executeSearchRule(query, rules);
-      }
-      else {
-        console.log('found no matching rules for ', query);
-        return [];}
+      returnData = that.findMatchingRules(query, function(errors, data) {
+        that.executeSearchRule(data, function(errors, data) {
+          fn(null, data);
+        });
+      });
     }
-  } catch (e) {
-    return [];
-  }
 };
 
 completionEngine.prototype.getUnfilteredClassesOrObjects = function() {
@@ -68,8 +65,11 @@ completionEngine.prototype.getUnfilteredClassesOrObjects = function() {
   });
 };
 
-completionEngine.prototype.findMatchingRules = function(query) {
-  var matchingRules = [];
+completionEngine.prototype.findMatchingRules = function(query, fn) {
+  console.log('matching rules for query', query);
+  var matchingRules = [],
+      error,
+      returnData = {query : query, matchingRules : []};
   try {
     for(var i = 0; i < this.matchingRules.length; i++) {
       var rule = this.matchingRules[i];
@@ -77,26 +77,31 @@ completionEngine.prototype.findMatchingRules = function(query) {
         matchingRules.push(rule);
       }
     }
-  } catch(e) {
-    console.log(e);
+    returnData['matchingRules'] = matchingRules;
+  } catch(errors) {
+    console.log('errors =', errors);
+    error = 'error';
   }
-  return matchingRules;
+  return fn(error, returnData);
 };
 
-completionEngine.prototype.executeSearchRule = function(query, searchRules) {
-  console.log('executing');
+completionEngine.prototype.executeSearchRule = function(data, fn) {
+  var searchRules = data.matchingRules,
+      errors,
+      returnData = [];
+
   if (searchRules[0].name == 'class/obj') {
-    return this.findClasses(query);
+    returnData = this.findClasses(data.query);
   } else if (searchRules[0].name == 'class/obj->member') {
-    var results = this.findClasses(query);
+    returnData = this.findClasses(data.query);
   } else {
     console.log('no matching execution for', searchRules[0]);
     return [];
   }
+  fn(null, returnData);
 };
 
 completionEngine.prototype.findClasses = function(query) {
-  console.log('querying classes for', query);
   return this.classSymbolTable.records.reduce(function(acc, classTable) {
     if (classTable.Name.indexOf(query) === 0) {
       return acc.concat(classTable.Name);

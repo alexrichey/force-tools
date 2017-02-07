@@ -60,10 +60,10 @@ app.use('/api/complete', function (req, res, next) {
 
 app.use('/complete', function (req, res, next) {
   console.log('completing for ' + req.query.filter);
-  var completions;
   if (engine) {
-    completions = engine.complete({query : req.query.filter});
-    res.render('completions', {title: "Completions", completions: completions}) ;
+    engine.complete({query : req.query.filter}, function(errors, data) {
+      res.render('completions', {title: "Completions", completions: data}) ;
+    });
   } else {
     console.log('no engine');
     res.render('completions', {title: "Completions", completions: []}) ;

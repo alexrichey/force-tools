@@ -5,8 +5,22 @@ var symbolTable = require('../resources/symbol_tables/symbol_table.json'),
 
 describe("Class completion", function() {
   it('should be able to complete basic class lookups from the symbol table', function() {
-    expect(engine.complete({query: "Mock"}).sort()).toEqual(['MockClass', 'MockClassOther'].sort());
-    expect(engine.complete({query: "MockClassO"}).sort()).toEqual(['MockClassOther']);
+    var expectedResults,
+        actualResults;
+
+    engine.complete({query: "Mock"}, function(errors, output) {
+      expectedResults = ['MockClass', 'MockClassOther'].sort();
+      actualResults = output.sort();
+      expect(actualResults).toEqual(expectedResults);
+    });
+
+    engine.complete({query: "MockClassO"}, function(errors, output) {
+      expectedResults = ['MockClassOther'];
+      actualResults = output;
+      expect(actualResults).toEqual(expectedResults);
+    });
+
+
   });
 
   // it('should be able to lookup attributes from the classes', function() {
