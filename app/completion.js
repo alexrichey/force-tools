@@ -6,17 +6,30 @@ function completionEngine(args) {
     {'name' : 'class/obj',
      'path' : [['class'], ['object']],
      'regex' : /^[\w]*$/,
-     'description' : 'Looking up just an object or class',
-     'fn' : this.findClasses
+     'description' : 'Looking up just an object or class'
     },
     {'name' : 'class/obj->member',
      'path': [['class', 'member'], ['object', 'member']],
      'regex' : /^[\w]*\.[\w]*/,
-     'description' : 'Looking up an object, then the member',
-     'fn' : this.findClasses,
-     'cb' : this.findMethods
+     'description' : 'Looking up an object, then the member'
     }
   ];
+};
+
+completionEngine.prototype.complete = function(request, fn) {
+  var query = request.query ? request.query : '',
+      rules = [],
+      errors,
+      that = this,
+      returnData = [];
+
+  that.findMatchingRules(query, function(errors, data) {
+    console.log('matching rules are', data);
+    that.executeSearchRules(data, function(errors, data) {
+      console.log('returned from executeSearchRules, data', data);
+      fn(null, data);
+    });
+  });
 };
 
 completionEngine.prototype.completeObjects = function(request) {
@@ -40,26 +53,7 @@ completionEngine.prototype.completeObjects = function(request) {
   }
 };
 
-completionEngine.prototype.complete = function(request, fn) {
-  var query = request.query ? request.query : '',
-      rules = [],
-      errors,
-      that = this;
-      returnData = [];
-    if (query === '') {
-      returnData = this.getUnfilteredClassesOrObjects();
-      fn(null, returnData);
-    } else {
-      // We've got a query!
-      returnData = that.findMatchingRules(query, function(errors, data) {
-        that.executeSearchRule(data, function(errors, data) {
-          fn(null, data);
-        });
-      });
-    }
-};
-
-completionEngine.prototype.getUnfilteredClassesOrObjects = function() {
+completionEngine.prototype.getUnfilteredClassesOrObjects = function(error, data) {
   return this.classSymbolTable.records.map(function(classTable) {
     return classTable.Name;
   });
@@ -69,46 +63,51 @@ completionEngine.prototype.findMatchingRules = function(query, fn) {
   console.log('matching rules for query', query);
   var matchingRules = [],
       error,
-      returnData = {query : query, matchingRules : []};
+      data = {query : query, matchingRules : []};
   try {
     for(var i = 0; i < this.matchingRules.length; i++) {
       var rule = this.matchingRules[i];
-      if (query.match(rule.regex)) {
-        matchingRules.push(rule);
-      }
-    }
-    returnData['matchingRules'] = matchingRules;
+      if (query.match(rule.regex)) {matchingRules.push(rule);}}
+    data['matchingRules'] = matchingRules;
   } catch(errors) {
     console.log('errors =', errors);
     error = 'error';
   }
-  return fn(error, returnData);
+  fn(error, data);
 };
 
-completionEngine.prototype.executeSearchRule = function(data, fn) {
+completionEngine.prototype.executeSearchRules = function(data, fn) {
   var searchRules = data.matchingRules,
       errors,
-      returnData = [];
+      completions = [];
 
+  console.log('executing search rules');
   if (searchRules[0].name == 'class/obj') {
-    returnData = this.findClasses(data.query);
+    console.log('completing for class/obj');
+    this.findClasses(data.query, function(errors, data) {
+      fn(null, data);
+    });
   } else if (searchRules[0].name == 'class/obj->member') {
-    returnData = this.findClasses(data.query);
+    completions = this.findClasses(data.query);
   } else {
     console.log('no matching execution for', searchRules[0]);
     return [];
   }
-  fn(null, returnData);
 };
 
-completionEngine.prototype.findClasses = function(query) {
-  return this.classSymbolTable.records.reduce(function(acc, classTable) {
+completionEngine.prototype.findClasses = function(query, fn) {
+  var data = [];
+
+  data = this.classSymbolTable.records.reduce(function(acc, classTable) {
     if (classTable.Name.indexOf(query) === 0) {
       return acc.concat(classTable.Name);
     } else {
       return acc;
     }
   }, []);
+  console.log('done finding classes', data);
+
+  fn(null, data);
 };
 
 module.exports = completionEngine;
