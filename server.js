@@ -2,7 +2,7 @@ var express = require('express'),
     fs = require('fs'),
     jsforceWrapper = require('./app/jsforce-wrapper.js'),
     classSymbolTable = require('./resources/symbol_table.json'),
-    completionEngine = require('./app/completion.js'),
+    CompletionEngine = require('./app/completion.js'),
     config =    JSON.parse(fs.readFileSync('./config.json')),
     lightning = JSON.parse(fs.readFileSync('./resources/lightning.json', 'utf8')),
     vf =        JSON.parse(fs.readFileSync('./resources/visualforce.json', 'utf8'));
@@ -14,7 +14,7 @@ app.use(express.static('public'));
 
 function initEngine(st) {
   try {
-    engine = new completionEngine({classSymbolTable: st});
+    engine = new CompletionEngine({classSymbolTable: st});
     console.log('engine successfully created');
   } catch(e) {
     console.log('Error loading symbol table!');

@@ -1,12 +1,20 @@
-function completionEngine(args) {
+var Query = require('./query');
+
+
+function CompletionEngine(args) {
   this.objectsSymbolTable = args.objectsSymbolTable;
   this.classSymbolTable = args.classSymbolTable;
 
   this.matchingRules = [
-    {'name' : 'class/obj',
-     'path' : [['class'], ['object']],
+    {'name' : 'object',
+     'path' : [['object']],
      'regex' : /^[\w]*$/,
-     'description' : 'Looking up just an object or class'
+     'description' : 'Looking up an object'
+    },
+    {'name' : 'class',
+     'path' : [['class']],
+     'regex' : /^[\w]*$/,
+     'description' : 'Looking up a class'
     },
     {'name' : 'class/obj->member',
      'path': [['class', 'member'], ['object', 'member']],
@@ -16,98 +24,163 @@ function completionEngine(args) {
   ];
 };
 
-completionEngine.prototype.complete = function(request, fn) {
-  var query = request.query ? request.query : '',
-      rules = [],
-      errors,
+CompletionEngine.prototype.complete = function(request, fn) {
+  var errors,
       that = this,
-      returnData = [];
+      query;
 
-  that.findMatchingRules(query, function(errors, data) {
-    console.log('matching rules are', data);
-    that.executeSearchRules(data, function(errors, data) {
-      console.log('returned from executeSearchRules, data', data);
-      fn(null, data);
+  query = {
+    searchTerm : request.query ? request.query : '',
+    matchingRules : [],
+    results : [],
+    errors : []
+  };
+
+  that.findMatchingRules(query, function(errors, query) {
+    console.log('found %s matching rules', query.matchingRules.length);
+    that.executeAllMatchingRules(query, function(errors, query) {
+      console.log('finished query. Got %s result sets', query.results.length);
+      fn(null, query);
     });
   });
 };
 
-completionEngine.prototype.completeObjects = function(request) {
-  try {
-    var objectSplit = request.context.split(/\./),
-        objectName = objectSplit[0],
-        fieldAbbrev = objectSplit[1] ? objectSplit[1] : '',
-        fieldData = this.symbolTable['objects'][objectName]['fields'];
-
-    fields = Object.keys(fieldData);
-    if (fieldAbbrev !== '') {
-      fields = fields.query(function(field) {
-        return field.lastIndexOf(fieldAbbrev) === 0;
-      });
-    }
-
-    return fields;
-
-  } catch (e) {
-    return [];
-  }
-};
-
-completionEngine.prototype.getUnfilteredClassesOrObjects = function(error, data) {
-  return this.classSymbolTable.records.map(function(classTable) {
-    return classTable.Name;
-  });
-};
-
-completionEngine.prototype.findMatchingRules = function(query, fn) {
+CompletionEngine.prototype.findMatchingRules = function(query, fn) {
+  var error;
   console.log('matching rules for query', query);
-  var matchingRules = [],
-      error,
-      data = {query : query, matchingRules : []};
   try {
     for(var i = 0; i < this.matchingRules.length; i++) {
       var rule = this.matchingRules[i];
-      if (query.match(rule.regex)) {matchingRules.push(rule);}}
-    data['matchingRules'] = matchingRules;
+      if (query.searchTerm.match(rule.regex)) {query.matchingRules.push(rule);}}
   } catch(errors) {
     console.log('errors =', errors);
     error = 'error';
   }
-  fn(error, data);
+  fn(error, query);
 };
 
-completionEngine.prototype.executeSearchRules = function(data, fn) {
-  var searchRules = data.matchingRules,
-      errors,
-      completions = [];
+CompletionEngine.prototype.executeAllMatchingRules = function(query, fn) {
+  var queries = [];
+  for(var i = 0; i < query.matchingRules.length; i++) {
+    queries.push(new Query(query.matchingRules[i]));
+  }
+
 
   console.log('executing search rules');
-  if (searchRules[0].name == 'class/obj') {
-    console.log('completing for class/obj');
-    this.findClasses(data.query, function(errors, data) {
-      fn(null, data);
+  var that = this,
+      errors;
+  that.executeNextMatchingRule(query, function (errors, query) {
+    query.matchingRules.shift();
+    if (query.matchingRules.length > 0) {
+      that.executeAllMatchingRules(query, fn);
+    } else {
+      console.log('-- done with all search rules');
+      fn(errors, query);
+    }
+  });
+};
+
+CompletionEngine.prototype.executeNextMatchingRule = function(query, fn) {
+  var nextRule = query.matchingRules[0],
+      that = this;
+  console.log('executing query for Matching Rule:', nextRule.name);
+
+  switch (nextRule.name) {
+  case 'object':
+    that.findObjects(query, function(errors, query) {
+      fn(null, query);
     });
-  } else if (searchRules[0].name == 'class/obj->member') {
-    completions = this.findClasses(data.query);
-  } else {
-    console.log('no matching execution for', searchRules[0]);
-    return [];
+    break;
+
+  case 'class':
+    console.log('completing classes for:', query.searchTerm);
+    that.findClasses(query, function(errors, query) {
+      fn(null, query);
+    });
+    break;
+
+  case 'class/obj->member':
+    console.log('completing classes/objects for:', query.searchTerm);
+    that.findClasses(query, function(errors, query) {
+      that.findClassMembers(query, function(errors, query) {
+        console.log('found class members');
+        fn(null, query);
+      });
+    });
+    break;
   }
 };
 
-completionEngine.prototype.findClasses = function(query, fn) {
-  var data = [];
+CompletionEngine.prototype.findClasses = function(query, fn) {
+  var result = {};
 
-  data = this.classSymbolTable.records.reduce(function(acc, classTable) {
+  if (query.searchTerm === '') {
+    console.log('wildcard class search!');
+    this.getUnfilteredClasses(query, function (error, query) {
+      fn(error, query);
+    });
+  } else {
+    console.log('querying for', query.searchTerm);
+    result.records = this.classSymbolTable.records.reduce(function(acc, classTable) {
+      if (classTable.Name.indexOf(query.searchTerm) === 0) {
+        return acc.concat(classTable.Name);
+      } else {
+        return acc;
+      }
+    }, []);
+    query.results.push(result);
+    console.log('done finding classes', query.results);
+    fn(null, query);
+  }
+};
+
+CompletionEngine.prototype.findObjects = function(query, fn) {
+  fn(null, query);
+};
+
+CompletionEngine.prototype.getUnfilteredClasses = function(query, fn) {
+  console.log('getting unfiltered classes');
+  var result = {
+    records : this.classSymbolTable.records.map(function(classTable) {
+      return classTable.Name;
+    })
+  };
+  query.results.push(result);
+  fn(null, query);
+};
+
+CompletionEngine.prototype.findClassMembers = function(query, fn) {
+  var results = [],
+      className = query.results[0],
+      memberPart = query.memberPart;
+  console.log(query);
+
+  console.log('Finding class members for ', className);
+  results = this.classSymbolTable.records.reduce(function(acc, classTable) {
     if (classTable.Name.indexOf(query) === 0) {
       return acc.concat(classTable.Name);
     } else {
       return acc;
     }
   }, []);
-  console.log('done finding classes', data);
+  console.log('done finding classes', results);
 
-  fn(null, data);
+  fn(null, results);
 };
 
-module.exports = completionEngine;
+CompletionEngine.prototype.getOrderedFormattedQueryResults = function(query, fn) {
+  console.log('ordering and formatting results');
+  var results = [],
+      result;
+  for(var resultsIndex = 0; resultsIndex < query.results.length; resultsIndex++) {
+    result = query.results[resultsIndex];
+    for(var i = 0; i < result.records.length; i++) {
+      results.push(result.records[i]);
+    }
+  }
+  results.sort();
+  console.log('returning sorted results', results);
+  fn(null, results);
+};
+
+module.exports = CompletionEngine;

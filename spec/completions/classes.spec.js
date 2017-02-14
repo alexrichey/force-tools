@@ -1,40 +1,77 @@
 var symbolTable = require('../resources/symbol_tables/symbol_table.json'),
-    completionEngine = require('../../app/completion.js'),
+    CompletionEngine = require('../../app/completion.js'),
     _ = require('underscore'),
-    engine = new completionEngine({classSymbolTable : symbolTable});
-
+    totalAssertions = 0,
+    engine = new CompletionEngine({classSymbolTable : symbolTable});
 
 describe("Class completion", function() {
+  jasmine.DEFAULT_TIMEOUT_INTERVAL = 1000;
 
-  var givenQueryWeExpect = function(query, expected) {
-    engine.complete(query, function(errors, output) {
-      console.log('asserting...');
-      expected.sort();
-      actualResults = output.sort();
-      expect(output).toEqual(expected);
+  var getOrderedCompletions = function(searchTerm, fn) {
+    engine.complete(searchTerm, function(errors, query) {
+      engine.getOrderedFormattedQueryResults(query, function (errors, output) {
+        fn(null, output);
+      });
     });
   };
 
-  it('should be able to complete class and attr lookups from the symbol table', function() {
-    var testCases = [
-      // basic class lookups
-      [{query: ""          }, ['MockClass', 'MockClassOther' ]],
-      [{query: "Mock"      }, ['MockClass', 'MockClassOther' ]],
-      [{query: "MockClassO"}, ['MockClassOther'              ]],
+  it('should grab all classes for a wildcard search', function(done) {
+    getOrderedCompletions({query: ''}, function(errors, output) {
+      console.log('got here');
+      expect(output).toEqual(['MockClass', 'MockClassOther' ]);
+      done();
+    });
+  });
 
-      // classes and attributes
-      // [{query: "MockClassOther."}, ['MockClassOther.MockClassOther']]
+  it('should correctly filter class searches', function(done) {
+    getOrderedCompletions({query: 'MockClass'}, function(errors, output) {
+      expect(output).toEqual(['MockClass', 'MockClassOther']);
+      done();
+    });
+  });
+
+  it('should correctly filter class searches', function(done) {
+    getOrderedCompletions({query: 'MockClassO'}, function(errors, output) {
+      expect(output).toEqual(['MockClassOther' ]);
+      done();
+    });
+  });
+
+  it('should do class member lookups', function(done) {
+    getOrderedCompletions({query: 'MockClassOther.'}, function(errors, output) {
+      expect(output).toEqual(['MockClassOther.MockClassOther' ]);
+      done();
+    });
+  });
+
+  fit('query testing...', function(done) {
+    getOrderedCompletions({query: 'MockClas'}, function(errors, output) {
+      expect(output).toEqual(['MockClass', 'MockClassOther' ]);
+      done();
+    });
+  });
+
+});
+
+    // var testCases = [
+    //   // basic class lookups
+
+
+    //   [{query: ""          }, ['MockClass', 'MockClassOther' ]],
+    //   [{query: "Mock"      }, ['MockClass', 'MockClassOther' ]],
+    //   [{query: "MockClassO"}, ['MockClassOther'              ]],
+
+    //   // classes and attributes
+    //   [{query: "MockClassOther."}, ['MockClassOther.MockClassOther']]
 
 
 
-    ];
+    // ];
 
-    for(var i = 0; i < testCases.length; i++) {
-      givenQueryWeExpect(testCases[i][0], testCases[i][1]);
-    }
+    // for(var i = 0; i < testCases.length; i++) {
+    //   givenQueryWeExpect(testCases[i][0], testCases[i][1]);
+    // }
 
 
     // class and attributes
     // givenQueryWeExpect({query: "MockClassOther."}, ['MockClassOther.MockClassOther']);
-  });
-});
