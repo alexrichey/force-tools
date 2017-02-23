@@ -6,35 +6,26 @@ var symbolTable = require('../resources/symbol_tables/symbol_table.json'),
 
 describe("Class completion", function() {
 
-  var givenQueryWeExpect = function(query, expected) {
-    engine.complete(query, function(errors, output) {
-      console.log('asserting...');
-      expected.sort();
-      actualResults = output.sort();
-      expect(output).toEqual(expected);
+  it('should complete', function(done) {
+    engine.complete('MockClassO', function(errors, output) {
+      var expected = ['MockClass', 'MockClassOther' ];
+      var actualResults = output.sort();
+      expect(actualResults).toEqual(expected);
+      done();
     });
-  };
+  });
 
-  it('should be able to complete class and attr lookups from the symbol table', function() {
-    var testCases = [
-      // basic class lookups
-      [{query: ""          }, ['MockClass', 'MockClassOther' ]],
-      [{query: "Mock"      }, ['MockClass', 'MockClassOther' ]],
-      [{query: "MockClassO"}, ['MockClassOther'              ]],
+  it('should complete', function(done) {
+    engine.complete('', function(errors, output) {
+      var expected = ['MockClass', 'MockClassOther' ];
+      var actualResults = output.sort();
+      expect(actualResults).toEqual(expected);
+      done();
+    });
+  });
 
-      // classes and attributes
-      // [{query: "MockClassOther."}, ['MockClassOther.MockClassOther']]
-
-
-
-    ];
-
-    for(var i = 0; i < testCases.length; i++) {
-      givenQueryWeExpect(testCases[i][0], testCases[i][1]);
-    }
-
-
-    // class and attributes
-    // givenQueryWeExpect({query: "MockClassOther."}, ['MockClassOther.MockClassOther']);
+  it('testing.......', function(done) {
+    console.log('here we go!');
+    engine.runQueries([1,2,3], 0, console.log);
   });
 });

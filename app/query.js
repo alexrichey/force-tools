@@ -1,5 +1,7 @@
 function Query(args) {
   this.init(args);
+  this.isComplete = false;
+  this.results = [];
 }
 
 Query.prototype.init = function(args) {
@@ -45,12 +47,19 @@ Query.prototype.findClassesMembers = function(args, fn) {
 Query.prototype.filterClassTable = function(classTable, memberFilter, fn) {
   var results = [],
       st = classTable.SymbolTable,
-      searchables = [];
+      searchables = [],
+      categories = ['properties', 'variables', 'constructors'],
+      category,
+      membersWithTypes;
 
-  searchables =
-    [].concat(st.properties)
-    .concat(st.variables)
-    .concat(st.constructors);
+  for(var i = 0; i < categories.length; i++) {
+    category = categories[i];
+    membersWithTypes = st[category].map(function(member) {
+      member.category = category;
+      return member;
+    });
+    searchables = searchables.concat(membersWithTypes);
+  }
 
   results = searchables.filter(function(member) {
     return member.name.indexOf(memberFilter.name) === 0;

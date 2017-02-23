@@ -1,6 +1,8 @@
 function completionEngine(args) {
   this.objectsSymbolTable = args.objectsSymbolTable;
   this.classSymbolTable = args.classSymbolTable;
+  this.timeOut_ms = 100;
+  this.pollingInterval = 1;
 
   this.matchingRules = [
     {'name' : 'class/obj',
@@ -108,6 +110,30 @@ completionEngine.prototype.findClasses = function(query, fn) {
   console.log('done finding classes', data);
 
   fn(null, data);
+};
+
+completionEngine.prototype.runQueries = function(queries, timeElapsed_ms, fn) {
+  var queriesAreFinished = false,
+      that = this,
+      finishedQueries = [];
+  for(var i = 0; i < queries.length; i++) {
+    if (queries[i].isComplete) {
+      queriesAreFinished = true;
+      break;
+    }
+  }
+
+  if (timeElapsed_ms > this.timeOut_ms || queriesAreFinished) {
+    finishedQueries = queries.filter(function(query) {
+      return query.isComplete;
+    });
+    fn('', finishedQueries);
+  } else {
+    setTimeout(function() {
+      console.log('timeing out');
+      that.runQueries(queries, timeElapsed_ms + that.pollingInterval, fn);
+    }, that.pollingInterval);
+  }
 };
 
 module.exports = completionEngine;
