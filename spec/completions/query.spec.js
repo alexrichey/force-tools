@@ -3,13 +3,29 @@ var classSymbolTable = require('../resources/symbol_tables/symbol_table.json'),
 
 fdescribe("Class Query", function() {
   jasmine.DEFAULT_TIMEOUT_INTERVAL = 1000;
-  var baseQueryArgs = {sorted: true, namesOnly: true, classSymbolTable: classSymbolTable};
+  var baseQueryArgs;
+
+  beforeEach(function() {
+    baseQueryArgs = {sorted: true, namesOnly: true, classSymbolTable: classSymbolTable};
+  });
 
   it('should find all with a wildcard search', function(done) {
     baseQueryArgs.className = '';
     var q = Query(baseQueryArgs);
     q.onFinish = function(data) {
       var expected = ['MockClass', 'MockClassOther'];
+      expect(data).toEqual(expected);
+      done();
+    };
+    q.run();
+  });
+
+  it('with exact match should find one classes', function(done) {
+    baseQueryArgs.className = 'MockClass';
+    baseQueryArgs.exactMatch = true;
+    var q = Query(baseQueryArgs);
+    q.onFinish = function(data) {
+      var expected = ['MockClass'];
       expect(data).toEqual(expected);
       done();
     };
@@ -27,13 +43,31 @@ fdescribe("Class Query", function() {
     q.run();
   });
 
-  it('should find members', function(done) {
+  it('should find stuff that starts with t', function(done) {
     baseQueryArgs.className = 'MockClass';
-    baseQueryArgs.memberName = 'T';
+    baseQueryArgs.memberName = 't';
+    baseQueryArgs.memberAttr = 'name';
+
     var q = Query(baseQueryArgs);
 
     q.onFinish = function(data) {
-      var expected = ['MockClass', 'MockClassOther'];
+      var expected = ['trueOrFalse', 'testLead', 'testContact'];
+      expect(data).toEqual(expected);
+      done();
+    };
+
+    q.run();
+  });
+
+  it('should find GREETING', function(done) {
+    baseQueryArgs.className = 'MockClass';
+    baseQueryArgs.memberName = 'G';
+    baseQueryArgs.memberAttr = 'name';
+
+    var q = Query(baseQueryArgs);
+
+    q.onFinish = function(data) {
+      var expected = ['GREETING'];
       expect(data).toEqual(expected);
       done();
     };
