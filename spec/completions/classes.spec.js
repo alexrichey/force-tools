@@ -1,7 +1,6 @@
 var classSymbolTable = require('../resources/symbol_tables/symbol_table.json'),
     Engine = require('../../app/completion.js'),
-    _ = require('underscore'),
-    totalAssertions = 0;
+    _ = require('underscore');
 
 describe("Class completion", function() {
   jasmine.DEFAULT_TIMEOUT_INTERVAL = 400;
