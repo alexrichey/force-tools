@@ -1,48 +1,78 @@
-var symbolTable = require('../resources/symbol_tables/symbol_table.json'),
-    CompletionEngine = require('../../app/completion.js'),
+var classSymbolTable = require('../resources/symbol_tables/symbol_table.json'),
+    Engine = require('../../app/completion.js'),
     _ = require('underscore'),
-    totalAssertions = 0,
-    engine = new CompletionEngine({classSymbolTable : symbolTable});
+    totalAssertions = 0;
 
 describe("Class completion", function() {
-  jasmine.DEFAULT_TIMEOUT_INTERVAL = 1000;
-
-  var getOrderedCompletions = function(searchTerm, fn) {
-    engine.complete(searchTerm, function(errors, query) {
-      engine.getOrderedFormattedQueryResults(query, function (errors, output) {
-        fn(null, output);
-      });
-    });
-  };
+  jasmine.DEFAULT_TIMEOUT_INTERVAL = 400;
 
   it('should grab all classes for a wildcard search', function(done) {
-    getOrderedCompletions({query: ''}, function(errors, output) {
-      console.log('got here');
-      expect(output).toEqual(['MockClass', 'MockClassOther' ]);
-      done();
-    });
+    var queryParams = {searchTerm: '', classSymbolTable: classSymbolTable,
+                       sorted: true, namesOnly: true},
+
+        engine = Engine(queryParams, function(data) {
+          expect(data).toEqual(['MockClass', 'MockClassOther']);
+          done();
+        });
+
+    engine.run();
   });
 
-  it('should correctly filter class searches', function(done) {
-    getOrderedCompletions({query: 'MockClass'}, function(errors, output) {
-      expect(output).toEqual(['MockClass', 'MockClassOther']);
-      done();
-    });
+  it('should find one class', function(done) {
+    var queryParams = {searchTerm: 'MockClassO', classSymbolTable: classSymbolTable,
+                       sorted: true, namesOnly: true},
+
+        engine = Engine(queryParams, function(data) {
+          expect(data).toEqual(['MockClassOther']);
+          done();
+        });
+
+    engine.run();
   });
 
-  it('should correctly filter class searches', function(done) {
-    getOrderedCompletions({query: 'MockClassO'}, function(errors, output) {
-      expect(output).toEqual(['MockClassOther' ]);
-      done();
-    });
+  it('should find classes', function(done) {
+    var queryParams = {searchTerm: 'MockClass', classSymbolTable: classSymbolTable,
+                       sorted: true, namesOnly: true},
+
+        engine = Engine(queryParams, function(data) {
+          expect(data).toEqual(['MockClass', 'MockClassOther']);
+          done();
+        });
+
+    engine.run();
+  });
+});
+
+describe("Class Completion with members", function() {
+  it('should find members', function(done) {
+    var queryParams = {searchTerm: 'MockClass.G', classSymbolTable: classSymbolTable,
+                       sorted: true, memberAttr: 'name'},
+        engine = Engine(queryParams, function(data) {
+          expect(data).toEqual(['GREETING']);
+          done();
+        });
+    engine.run();
   });
 
-  it('should do class member lookups', function(done) {
-    getOrderedCompletions({query: 'MockClassOther.'}, function(errors, output) {
-      expect(output).toEqual(['MockClassOther.MockClassOther' ]);
+  it('should find members', function(done) {
+    var queryParams = {searchTerm: 'MockClass.t', classSymbolTable: classSymbolTable,
+                       sorted: true, memberAttr: 'name'},
+    engine = Engine(queryParams, function(data) {
+      expect(data).toEqual([ 'trueOrFalse', 'testLead', 'testContact' ]);
       done();
     });
+    engine.run();
   });
 
-
+  it('do wild card searches with blank member', function(done) {
+    var queryParams = {searchTerm: 'MockClass.', classSymbolTable: classSymbolTable,
+                       sorted: true, memberAttr: 'name'},
+    engine = Engine(queryParams, function(data) {
+      expect(data).toEqual(
+        [ 'trueOrFalse', 'testLead', 'testContact', 'GREETING', 'setMe', 'MockClass', 'MockClass' ]
+      );
+      done();
+    });
+    engine.run();
+  });
 });

@@ -1,197 +1,112 @@
-var Query = require('./query');
+var Query = require('./query'),
+    _ = require('underscore');
 
-function CompletionEngine(args) {
+function CompletionEngine(args, fn) {
   this.objectsSymbolTable = args.objectsSymbolTable;
   this.classSymbolTable = args.classSymbolTable;
 
-  this.queries = args.queries? args.queries : [];
-  this.finishedQueries = [];
+  this.searchTerm = args.searchTerm;
+  this.sorted = args.sorted;
+  this.namesOnly = args.namesOnly;
+  this.memberAttr = args.memberAttr;
+  this.onFinish = fn ? fn : function(data) {};
+  this.finished = false;
+  this.queries = [];
 
   this.matchingRules = [
     {'name' : 'object',
-     'path' : [['object']],
      'regex' : /^[\w]*$/,
-     'description' : 'Looking up an object'
+     'description' : 'Looking up an object',
+     'matchingQueries' : ['object']
     },
     {'name' : 'class',
-     'path' : [['class']],
      'regex' : /^[\w]*$/,
-     'description' : 'Looking up a class'
+     'description' : 'Looking up a class',
+     'matchingQueries' : ['class']
     },
     {'name' : 'class/obj->member',
-     'path': [['class', 'member'], ['object', 'member']],
      'regex' : /^[\w]*\.[\w]*/,
-     'description' : 'Looking up an object, then the member'
+     'description' : 'Looking up an object, then the member',
+     'matchingQueries' : ['object', 'class']
     }
   ];
 };
 
-CompletionEngine.prototype.complete = function(request, fn) {
-  var errors,
-      that = this,
-      query;
+CompletionEngine.prototype.finish = function() {
+  this.onFinish(this.queries);
+};
 
-  query = {
-    searchTerm : request.query ? request.query : '',
-    matchingRules : [],
-    results : [],
-    errors : []
-  };
-
-  that.findMatchingRules(query, function(errors, query) {
-    console.log('found %s matching rules', query.matchingRules.length);
-    that.executeAllMatchingRules(query, function(errors, query) {
-      console.log('finished query. Got %s result sets', query.results.length);
-      fn(null, query);
+CompletionEngine.prototype.run = function() {
+  var that = this;
+  that.findMatchingRules(that.searchTerm, function(err, matchingRules) {
+    that.resolveMatchingRulesToQueries(matchingRules, function(err, queries) {
+      that.runQueries(queries, function(err, stats) {
+        that.queries = that.queries.map(function(query) {
+          return query.results;
+        });
+        that.queries = _.flatten(that.queries);
+        that.finish();
+      });
     });
   });
 };
 
-CompletionEngine.prototype.findMatchingRules = function(query, fn) {
-  var error;
-  console.log('matching rules for query', query);
+CompletionEngine.prototype.findMatchingRules = function(searchTerm, fn) {
+  var error,
+      matches = [],
+      that = this;
   try {
     for(var i = 0; i < this.matchingRules.length; i++) {
       var rule = this.matchingRules[i];
-      if (query.searchTerm.match(rule.regex)) {query.matchingRules.push(rule);}}
+      if (searchTerm.match(rule.regex)) {
+        console.log('matched %s with %s', searchTerm, rule.name);
+        matches.push(rule);
+      }
+    }
   } catch(errors) {
     console.log('errors =', errors);
     error = 'error';
   }
-  fn(error, query);
+  fn(error, matches);
 };
 
-CompletionEngine.prototype.executeAllMatchingRules = function(query, fn) {
-  for(var i = 0; i < query.matchingRules.length; i++) {
-    this.queries.push(new Query(query.matchingRules[i]));
-  }
+CompletionEngine.prototype.resolveMatchingRulesToQueries = function(matchingRules, fn) {
+  var queryArgs = {classSymbolTable: this.classSymbolTable, searchTerm: this.searchTerm,
+                   sorted: this.sorted, namesOnly: this.namesOnly};
 
-  var outOfTime = false;
-  setTimeout(function() {
-    outOfTime = true;
-  }, 2000);
-
-  while(!outOfTime){
-    if (this.queries.length === 0) {
-      fn(null, this.queries);
+  for(var i = 0; i < matchingRules.length; i++) {
+    var rule = matchingRules[i];
+    if (rule.name === 'class') {
+      queryArgs.className = this.searchTerm;
+      this.queries.push(Query(queryArgs));
+    } else if (rule.name === 'class/obj->member') {
+      queryArgs.className = this.searchTerm.split('.')[0];
+      queryArgs.memberName = this.searchTerm.split('.')[1];
+      queryArgs.memberAttr = this.memberAttr;
+      console.log("this.memberAttr = ", this.memberAttr);
+      this.queries.push(Query(queryArgs));
     }
   }
-
-  // console.log('executing search rules');
-  // var that = this,
-  //     errors;
-  // that.executeNextMatchingRule(query, function (errors, query) {
-  //   query.matchingRules.shift();
-  //   if (query.matchingRules.length > 0) {
-  //     that.executeAllMatchingRules(query, fn);
-  //   } else {
-  //     console.log('-- done with all search rules');
-  //     fn(errors, query);
-  //   }
-  // });
+  fn(null, this.queries);
 };
 
-CompletionEngine.prototype.executeNextMatchingRule = function(query, fn) {
-  var nextRule = query.matchingRules[0],
-      that = this;
-  console.log('executing query for Matching Rule:', nextRule.name);
-
-  switch (nextRule.name) {
-  case 'object':
-    that.findObjects(query, function(errors, query) {
-      fn(null, query);
-    });
-    break;
-
-  case 'class':
-    console.log('completing classes for:', query.searchTerm);
-    that.findClasses(query, function(errors, query) {
-      fn(null, query);
-    });
-    break;
-
-  case 'class/obj->member':
-    console.log('completing classes/objects for:', query.searchTerm);
-    that.findClasses(query, function(errors, query) {
-      that.findClassMembers(query, function(errors, query) {
-        console.log('found class members');
-        fn(null, query);
-      });
-    });
-    break;
+CompletionEngine.prototype.runQueries = function(queries, fn) {
+  for(var i = 0; i < queries.length; i++) {
+    var query = queries[i];
+    if (query.status === query.statuses.new) {query.run();}
   }
-};
 
-CompletionEngine.prototype.findClasses = function(query, fn) {
-  var result = {};
+  var unresolvedCount = queries.filter(function(query) {
+    return query.status === query.statuses.new || query.status === query.statuses.running ;
+  }).length;
 
-  if (query.searchTerm === '') {
-    console.log('wildcard class search!');
-    this.getUnfilteredClasses(query, function (error, query) {
-      fn(error, query);
-    });
+  if (unresolvedCount > 0) {
+    this.runQueries(queries);
   } else {
-    console.log('querying for', query.searchTerm);
-    result.records = this.classSymbolTable.records.reduce(function(acc, classTable) {
-      if (classTable.Name.indexOf(query.searchTerm) === 0) {
-        return acc.concat(classTable.Name);
-      } else {
-        return acc;
-      }
-    }, []);
-    query.results.push(result);
-    console.log('done finding classes', query.results);
-    fn(null, query);
+    fn(null, this.queries);
   }
 };
 
-CompletionEngine.prototype.findObjects = function(query, fn) {
-  fn(null, query);
+module.exports = function(args, fn) {
+  return new CompletionEngine(args, fn);
 };
-
-CompletionEngine.prototype.getUnfilteredClasses = function(query, fn) {
-  console.log('getting unfiltered classes');
-  var result = {
-    records : this.classSymbolTable.records.map(function(classTable) {
-      return classTable.Name;
-    })
-  };
-  query.results.push(result);
-  fn(null, query);
-};
-
-CompletionEngine.prototype.findClassMembers = function(query, fn) {
-  var results = [],
-      className = query.results[0],
-      memberPart = query.memberPart;
-  console.log(query);
-
-  console.log('Finding class members for ', className);
-  results = this.classSymbolTable.records.reduce(function(acc, classTable) {
-    if (classTable.Name.indexOf(query) === 0) {
-      return acc.concat(classTable.Name);
-    } else {
-      return acc;
-    }
-  }, []);
-  console.log('done finding classes', results);
-
-  fn(null, results);
-};
-
-CompletionEngine.prototype.getOrderedFormattedQueryResults = function(query, fn) {
-  console.log('ordering and formatting results');
-  var results = [],
-      result;
-  for(var resultsIndex = 0; resultsIndex < query.results.length; resultsIndex++) {
-    result = query.results[resultsIndex];
-    for(var i = 0; i < result.records.length; i++) {
-      results.push(result.records[i]);
-    }
-  }
-  results.sort();
-  console.log('returning sorted results', results);
-  fn(null, results);
-};
-
-module.exports = CompletionEngine;

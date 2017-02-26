@@ -103,7 +103,7 @@ var filterClassMembers = function(classTable, filters) {
 };
 
 module.exports = function(args) {
-  if (args.className && args.memberName) {
+  if (args.className && (args.memberName !== null && args.memberName !== undefined)) {
     return new ClassMemberQuery(args);
   } else if (args.className !== null && args.className !== undefined){
     return new ClassQuery(args);

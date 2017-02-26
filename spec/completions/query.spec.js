@@ -1,7 +1,7 @@
 var classSymbolTable = require('../resources/symbol_tables/symbol_table.json'),
     Query = require('../../app/query.js');
 
-fdescribe("Class Query", function() {
+describe("Class Query", function() {
   jasmine.DEFAULT_TIMEOUT_INTERVAL = 1000;
   var baseQueryArgs;
 
