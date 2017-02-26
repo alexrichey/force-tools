@@ -1,9 +1,11 @@
 var Query = require('./query');
 
-
 function CompletionEngine(args) {
   this.objectsSymbolTable = args.objectsSymbolTable;
   this.classSymbolTable = args.classSymbolTable;
+
+  this.queries = args.queries? args.queries : [];
+  this.finishedQueries = [];
 
   this.matchingRules = [
     {'name' : 'object',
@@ -60,24 +62,33 @@ CompletionEngine.prototype.findMatchingRules = function(query, fn) {
 };
 
 CompletionEngine.prototype.executeAllMatchingRules = function(query, fn) {
-  var queries = [];
   for(var i = 0; i < query.matchingRules.length; i++) {
-    queries.push(new Query(query.matchingRules[i]));
+    this.queries.push(new Query(query.matchingRules[i]));
   }
 
+  var outOfTime = false;
+  setTimeout(function() {
+    outOfTime = true;
+  }, 2000);
 
-  console.log('executing search rules');
-  var that = this,
-      errors;
-  that.executeNextMatchingRule(query, function (errors, query) {
-    query.matchingRules.shift();
-    if (query.matchingRules.length > 0) {
-      that.executeAllMatchingRules(query, fn);
-    } else {
-      console.log('-- done with all search rules');
-      fn(errors, query);
+  while(!outOfTime){
+    if (this.queries.length === 0) {
+      fn(null, this.queries);
     }
-  });
+  }
+
+  // console.log('executing search rules');
+  // var that = this,
+  //     errors;
+  // that.executeNextMatchingRule(query, function (errors, query) {
+  //   query.matchingRules.shift();
+  //   if (query.matchingRules.length > 0) {
+  //     that.executeAllMatchingRules(query, fn);
+  //   } else {
+  //     console.log('-- done with all search rules');
+  //     fn(errors, query);
+  //   }
+  // });
 };
 
 CompletionEngine.prototype.executeNextMatchingRule = function(query, fn) {
