@@ -24,10 +24,20 @@ app.use('/refresh-symbol-table', function (req, res, next) {
 
 app.use('/complete', function (req, res, next) {
   console.log('completing for ' + req.query.filter);
+  console.log('query is', req.query);
   var queryParams = {searchTerm: req.query.filter, classSymbolTable: classSymbolTable,
                      sorted: true, namesOnly: true, memberAttr: 'name'},
       engine = Engine(queryParams, function(errors, data) {
-        res.render('completions', {title: "Completions", completions: errors});
+        if (errors) {
+          console.log('errors! ', data);
+          res.send("errors!");
+        }
+        else if (req.query.api) {
+          console.log('api only!', data);
+          res.send(data);
+        } else {
+          res.render('completions', {title: "Completions", completions: data});
+        }
       });
   engine.run();
 });

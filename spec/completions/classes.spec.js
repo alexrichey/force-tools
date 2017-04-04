@@ -9,7 +9,7 @@ describe("Class completion", function() {
     var queryParams = {searchTerm: '', classSymbolTable: classSymbolTable,
                        sorted: true, namesOnly: true},
 
-        engine = Engine(queryParams, function(data) {
+        engine = Engine(queryParams, function(errors, data) {
           expect(data).toEqual(['MockClass', 'MockClassOther']);
           done();
         });
@@ -21,7 +21,7 @@ describe("Class completion", function() {
     var queryParams = {searchTerm: 'MockClassO', classSymbolTable: classSymbolTable,
                        sorted: true, namesOnly: true},
 
-        engine = Engine(queryParams, function(data) {
+        engine = Engine(queryParams, function(errors, data) {
           expect(data).toEqual(['MockClassOther']);
           done();
         });
@@ -33,7 +33,7 @@ describe("Class completion", function() {
     var queryParams = {searchTerm: 'MockClass', classSymbolTable: classSymbolTable,
                        sorted: true, namesOnly: true},
 
-        engine = Engine(queryParams, function(data) {
+        engine = Engine(queryParams, function(errors, data) {
           expect(data).toEqual(['MockClass', 'MockClassOther']);
           done();
         });
@@ -46,7 +46,7 @@ describe("Class Completion with members", function() {
   it('should find members', function(done) {
     var queryParams = {searchTerm: 'MockClass.G', classSymbolTable: classSymbolTable,
                        sorted: true, memberAttr: 'name'},
-        engine = Engine(queryParams, function(data) {
+        engine = Engine(queryParams, function(errors, data) {
           expect(data).toEqual(['GREETING']);
           done();
         });
@@ -56,7 +56,7 @@ describe("Class Completion with members", function() {
   it('should find members', function(done) {
     var queryParams = {searchTerm: 'MockClass.t', classSymbolTable: classSymbolTable,
                        sorted: true, memberAttr: 'name'},
-    engine = Engine(queryParams, function(data) {
+    engine = Engine(queryParams, function(errors, data) {
       expect(data).toEqual([ 'trueOrFalse', 'testLead', 'testContact' ]);
       done();
     });
@@ -66,7 +66,7 @@ describe("Class Completion with members", function() {
   it('do wild card searches with blank member', function(done) {
     var queryParams = {searchTerm: 'MockClass.', classSymbolTable: classSymbolTable,
                        sorted: true, memberAttr: 'name'},
-    engine = Engine(queryParams, function(data) {
+    engine = Engine(queryParams, function(errors, data) {
       expect(data).toEqual(
         [ 'trueOrFalse', 'testLead', 'testContact', 'GREETING', 'setMe', 'MockClass', 'MockClass' ]
       );

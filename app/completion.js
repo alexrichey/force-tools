@@ -33,7 +33,7 @@ function CompletionEngine(args, fn) {
 };
 
 CompletionEngine.prototype.finish = function() {
-  this.onFinish(this.queries);
+  this.onFinish(null, this.queries);
 };
 
 CompletionEngine.prototype.run = function() {
