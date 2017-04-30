@@ -2,6 +2,7 @@ var express = require('express'),
     fs = require('fs'),
     jsforceWrapper = require('./app/jsforce-wrapper.js'),
     classSymbolTable = require('./resources/symbol_table.json'),
+    TestRunner = require('./app/test_runner/test-runner.js'),
     Engine = require('./app/completion.js'),
     config =    JSON.parse(fs.readFileSync('./config.json')),
     lightning = JSON.parse(fs.readFileSync('./resources/lightning.json', 'utf8')),
@@ -16,8 +17,14 @@ app.get('/', function (req, res) {
   res.render('index', { title: 'Force Tools', message: 'Use the force, Luke!', username: config.username });
 });
 
+app.use('/test-runner', function (req, res, next) {
+  var runner = TestRunner(config);
+  runner.run(function(errors, data) {
+    res.render('test', {data: data});
+  });
+});
+
 app.use('/refresh-symbol-table', function (req, res, next) {
-  console.log(config.username, config.password, config.securityToken);
   jsforceWrapper(config.username, config.password, config.securityToken, console.log);
   res.send('refreshing');
 });
