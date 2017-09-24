@@ -1,26 +1,35 @@
-function BaseQuery(args) {
-  this.statuses = {new: 'new', running: 'running', done: 'done', failed: 'failed'};
-  this.status = this.statuses.new;
+var matchingRules = [
+    {'name' : 'object',
+     'regex' : /^[\w]*$/,
+     'description' : 'Looking up an object',
+     'matchingQueries' : ['object']
+    },
+    {'name' : 'class',
+     'regex' : /^[\w]*$/,
+     'description' : 'Looking up a class',
+     'matchingQueries' : ['class']
+    },
+    {'name' : 'classmember',
+     'regex' : /^[\w]*\.[\w]*/,
+     'description' : 'Looking up an object, then the member',
+     'matchingQueries' : ['object', 'class']
+    }
+  ];
+
+function Query(args) {
+  this.statuses = {NEW: 'new', RUNNING: 'running', DONE: 'done', FAILED: 'failed'};
+  this.status = this.statuses.NEW;
   this.results = [];
   this.errors = [];
   this.timeOut = 1000; //ms
-
-  this.finish = function () {
-    this.status = this.statuses.done;
-    this.onFinish(this.results);
-  };
-
-  this.onFinish = function(data) {}; // override by user;
-
-  this.run = function(args) { // override in inheriting objects
-    this.finish();
-  };
 
   return this;
 }
 
 function ClassQuery(args) {
-  this.__proto__ = BaseQuery();
+
+  this.baseQuery = new baseQuery(args);
+
   this.classSymbolTable = args.classSymbolTable;
   this.className = args.className;
   this.outputFormat = args.output;
@@ -102,10 +111,34 @@ var filterClassMembers = function(classTable, filters) {
   return results;
 };
 
-module.exports = function(args) {
-  if (args.className && (args.memberName !== null && args.memberName !== undefined)) {
-    return new ClassMemberQuery(args);
-  } else if (args.className !== null && args.className !== undefined){
-    return new ClassQuery(args);
-  }
-};
+function makeQuery(args) {
+  return [];
+}
+
+module.exports = makeQuery;
+
+
+  // if (args.matchingRule.name === 'class') {
+  //   console.log('new class query');
+  //   return new ClassQuery(args);
+  // } else if (args.matchingRule.name === 'classmember') {
+  //   console.log('new class query');
+  //   return new ClassMemberQuery(args);
+  // } else {
+  //
+  // }
+
+// CompletionEngine.prototype.findMatchingRules = function(searchTerm, fn) {
+//   var error,
+//       matches = [],
+//       that = this;
+//   try {
+//     for(var i = 0; i < this.matchingRules.length; i++) {
+//       var rule = this.matchingRules[i];
+//       if (searchTerm.match(rule.regex)) {
+//         matches.push(rule);
+//       }
+//     }
+//   } catch(errors) {error = errors;}
+//   fn(error, matches);
+// };
