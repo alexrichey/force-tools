@@ -5,10 +5,10 @@ function CompletionEngine(args, fn) {
   this.objectsSymbolTable = args.objectsSymbolTable;
   this.classSymbolTable = args.classSymbolTable;
 
-  this.queryResources = [
-    this.objectsSymbolTable,
-    this.classSymbolTable
-  ];
+  this.queryResources = {
+    objectsSymbolTable: this.objectsSymbolTable,
+    classSymbolTable: this.classSymbolTable
+  };
 
   this.finished = false;
   this.queries = [];
@@ -19,13 +19,17 @@ CompletionEngine.prototype.run = function(queryParams, cbFn) {
     if (err) { console.log('Error constructing queries for matching rules: ', err); return;}
     runQueries(queries, function(err, completedQueries) {
       if (err) { console.log('Error running queries: ', err); return;}
-      cbFn(err, completedQueries);
+      var results = [];
+      for (var i = 0; i < completedQueries.length; i++) {
+        results = results.concat(completedQueries[i].results);
+      }
+      cbFn(null, results);
     });
   });
 };
 
 CompletionEngine.prototype.getQueriesForMatchingRules = function(queryParams, fn) {
-  var queryArgs = {classSymbolTable: this.classSymbolTable, queryParams: queryParams},
+  var queryArgs = {queryResources: this.queryResources, queryParams: queryParams},
       queries = [],
       errors;
   try {
@@ -37,19 +41,23 @@ CompletionEngine.prototype.getQueriesForMatchingRules = function(queryParams, fn
 };
 
 runQueries = function(queries, fn) {
+  // TODO: add time limit
+  var that = this;
   for(var i = 0; i < queries.length; i++) {
     var query = queries[i];
-    if (query.status === query.statuses.new) {query.run();}
+    if (query.status === query.statuses.NEW) {query.run();}
   }
 
   var unresolvedCount = queries.filter(function(query) {
-    return query.status === query.statuses.new || query.status === query.statuses.running ;
+    return query.status === query.statuses.NEW || query.status === query.statuses.RUNNING ;
   }).length;
 
   if (unresolvedCount > 0) {
-    this.runQueries(queries);
+    setTimeout(function () {
+      that.runQueries(queries);
+    }, 100);
   } else {
-    fn(null, this.queries);
+    fn(null, queries);
   }
 };
 

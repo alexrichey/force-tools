@@ -7,38 +7,29 @@ describe("Class completion", function() {
   var engine = CompletionEngine({classSymbolTable: classSymbolTable});
 
   it('should grab all classes for a wildcard search', function(done) {
-    var queryParams = {searchTerm: '', sorted: true, namesOnly: true};
+    var queryParams = {searchTerm: ''};
 
-    engine.run(queryParams, function (errors, data) {
-      expect(data).toEqual(['MockClass', 'MockClassOther']);
+    engine.run(queryParams, function (errors, queryResults) {
+      var classNames = queryResults.map(function (symTable) {
+        return symTable.Name;
+      }).sort();
+      expect(classNames).toEqual(['MockClass', 'MockClassOther'].sort());
+      done();
     });
   });
 
-//   it('should find one class', function(done) {
-//     var queryParams = {searchTerm: 'MockClassO', classSymbolTable: classSymbolTable,
-//                        sorted: true, namesOnly: true},
-//
-//         engine = Engine(queryParams, function(errors, data) {
-//           expect(data).toEqual(['MockClassOther']);
-//           done();
-//         });
-//
-//     engine.run();
-//   });
-//
-//   it('should find classes', function(done) {
-//     var queryParams = {searchTerm: 'MockClass', classSymbolTable: classSymbolTable,
-//                        sorted: true, namesOnly: true},
-//
-//         engine = Engine(queryParams, function(errors, data) {
-//           expect(data).toEqual(['MockClass', 'MockClassOther']);
-//           done();
-//         });
-//
-//     engine.run();
-//   });
-// });
-//
+  it('should find a specific class', function(done) {
+    var queryParams = {searchTerm: 'MockClassO'};
+
+    engine.run(queryParams, function (errors, queryResults) {
+      var classNames = queryResults.map(function (symTable) {
+        return symTable.Name;
+      });
+      expect(classNames).toEqual(['MockClassOther']);
+      done();
+    });
+  });
+
 // describe("Class Completion with members", function() {
 //   it('should find members', function(done) {
 //     var queryParams = {searchTerm: 'MockClass.G', classSymbolTable: classSymbolTable,
