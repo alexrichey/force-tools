@@ -30,36 +30,27 @@ describe("Class completion", function() {
     });
   });
 
-// describe("Class Completion with members", function() {
-//   it('should find members', function(done) {
-//     var queryParams = {searchTerm: 'MockClass.G', classSymbolTable: classSymbolTable,
-//                        sorted: true, memberAttr: 'name'},
-//         engine = Engine(queryParams, function(errors, data) {
-//           expect(data).toEqual(['GREETING']);
-//           done();
-//         });
-//     engine.run();
-//   });
-//
-//   it('should find members', function(done) {
-//     var queryParams = {searchTerm: 'MockClass.t', classSymbolTable: classSymbolTable,
-//                        sorted: true, memberAttr: 'name'},
-//     engine = Engine(queryParams, function(errors, data) {
-//       expect(data).toEqual([ 'trueOrFalse', 'testLead', 'testContact' ]);
-//       done();
-//     });
-//     engine.run();
-//   });
-//
-//   it('do wild card searches with blank member', function(done) {
-//     var queryParams = {searchTerm: 'MockClass.', classSymbolTable: classSymbolTable,
-//                        sorted: true, memberAttr: 'name'},
-//     engine = Engine(queryParams, function(errors, data) {
-//       expect(data).toEqual(
-//         [ 'trueOrFalse', 'testLead', 'testContact', 'GREETING', 'setMe', 'MockClass', 'MockClass' ]
-//       );
-//       done();
-//     });
-//     engine.run();
-//   });
+  it('should find a class member', function(done) {
+    engine.run({searchTerm: 'MockClass.G'}, function (errors, queryResults) {
+      var result = queryResults[0];
+      expect(result.name).toEqual('GREETING');
+      done();
+    });
+  });
+
+  it('should find class members', function(done) {
+    engine.run({searchTerm: 'MockClass.t'}, function (errors, queryResults) {
+      var queryResultNames = _.pluck(queryResults, 'name').sort();
+      expect(queryResultNames).toEqual(['trueOrFalse', 'testLead', 'testContact'].sort());
+      done();
+    });
+  });
+
+  it('should find all class members with a wildcard search', function(done) {
+    engine.run({searchTerm: 'MockClass.'}, function (errors, queryResults) {
+      var queryResultNames = _.pluck(queryResults, 'name').sort();
+      expect(queryResultNames).toEqual(['trueOrFalse', 'testLead', 'testContact', 'GREETING', 'setMe', 'MockClass', 'MockClass'].sort());
+      done();
+    });
+  });
 });

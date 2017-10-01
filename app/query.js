@@ -3,20 +3,20 @@ var matchingRules = {
     'name': 'object',
     'regex': /^[\w]*$/,
     'regexPartsFn': (x) => {return {objectName: x};},
-    'description': 'Looking up an object',
+    'description': 'Looking up an object'
   },
   class: {
     'name': 'class',
     'regex': /^[\w]*$/,
     'regexPartsFn': (x) => {return {className: x};},
-    'description': 'Looking up a class',
+    'description': 'Looking up a class'
   },
   classMember: {
     'name': 'classMember',
     'regex': /^[\w]*\.[\w]*/,
     'regexPartsFn': (x) => {return {className: x.split('.')[0],
                                     memberName: x.split('.')[1]};},
-    'description': 'Looking up a class, then the class member',
+    'description': 'Looking up a class, then the class member'
   }
 };
 
@@ -39,23 +39,33 @@ Query.prototype.run = function () {
   this.status = this.statuses.RUNNING;
 
   var parts = this.matchingRule.regexPartsFn(this.queryParams.searchTerm);
+
   if (this.matchingRule.name === matchingRules.class.name) {
     if (typeof this.queryResources.classSymbolTable === 'undefined') {
       throw new Error('No class symbol table was provided for class query');
     }
-    this.classQuery(parts.className, this.queryResources.classSymbolTable, false);
+    this.results = this.queryClasses(parts.className, false);
+    this.status = this.statuses.DONE;
+  } else if (this.matchingRule.name === matchingRules.classMember.name) {
+    if (typeof this.queryResources.classSymbolTable === 'undefined') {
+      throw new Error('No class symbol table was provided for classMember query');
+    }
+    this.results = this.queryClassMembers(parts.className, parts.memberName, false);
+    this.status = this.statuses.DONE;
   } else if (this.matchingRule.name === matchingRules.object.name) {
     this.status = this.statuses.DONE;
   }
 },
 
-Query.prototype.classQuery = function (className, symbolTable, exactMatchOnly) {
-  var that = this;
+Query.prototype.queryClasses = function (className, exactMatchOnly) {
+  var that = this,
+      symbolTable = that.queryResources.classSymbolTable;
+      results = [];
   if (className === '') {
-    that.results = symbolTable.records;
+    results = symbolTable.records;
   } else {
-    that.results = symbolTable.records.reduce(function(acc, classTable) {
-      if (exactMatchOnly && classTable.Name === that.className) {
+    results = symbolTable.records.reduce(function(acc, classTable) {
+      if (exactMatchOnly && classTable.Name === className) {
         return acc.concat(classTable);
       }
       else if (!exactMatchOnly && classTable.Name.indexOf(className) === 0) {
@@ -65,60 +75,34 @@ Query.prototype.classQuery = function (className, symbolTable, exactMatchOnly) {
       }
     }, []);
   }
-  this.status = this.statuses.DONE;
+  return results;
 },
 
-function ClassMemberQuery(args) {
-  this.__proto__ = BaseQuery();
-  this.classSymbolTable = args.classSymbolTable;
-  this.className = args.className;
-  this.memberName = args.memberName;
+Query.prototype.queryClassMembers = function(className, memberName, exactMatchOnly) {
+  var symbolTable = this.queryResources.classSymbolTable;
+      results = [];
 
-  this.run = function() {
-    var that = this,
-        classNames,
-        classQueryArgs = {className: that.className, classSymbolTable: that.classSymbolTable,
-                          exactMatch: true},
-        classQuery = new ClassQuery(classQueryArgs);
+  var classes = this.queryClasses(className, true);
+  if (classes.length === 0) {
+    return [];
+  } else {
+    results = this.filterClassMembers(classes[0], memberName);
+  }
+  return results;
+},
 
-    classQuery.onFinish = function(data) {
-      // TODO multiple classes?
-      that.results = filterClassMembers(data[0], args);
-      if (args.memberAttr) {
-        that.results = that.results.map(function(member) {
-          return member[args.memberAttr];
-        });
-      }
-      that.finish();
-    };
+Query.prototype.filterClassMembers = function(classTable, memberName) {
+  var results = [];
 
-    classQuery.run();
-  };
-
-  return this;
-}
-
-var getClassNamesFromTables = function(tables) {
-  return tables.map(function(table) {
-    return table.Name;
-  }).sort();
-};
-
-var filterClassMembers = function(classTable, filters) {
-  var results = [],
-      st = classTable.SymbolTable,
-      searchables = [];
-
-  searchables =
-    [].concat(st.properties)
-    .concat(st.variables)
-    .concat(st.constructors);
+  searchables = [].concat(classTable.SymbolTable.properties)
+                  .concat(classTable.SymbolTable.variables)
+                  .concat(classTable.SymbolTable.constructors);
 
   results = searchables.filter(function(member) {
-    return member.name.indexOf(filters.memberName) === 0;
+    return member.name.indexOf(memberName) === 0;
   });
   return results;
-};
+}
 
 function makeQueries(args) {
   var error,
