@@ -1,5 +1,5 @@
 var classSymbolTable = require('../resources/symbol_tables/symbol_table.json'),
-    CompletionEngine = require('../../app/completion.js'),
+    CompletionEngine = require('../../app/autocomplete/autocomplete.js'),
     _ = require('underscore');
 
 describe("Class completion", function() {

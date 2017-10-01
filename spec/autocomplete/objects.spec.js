@@ -1,4 +1,4 @@
-var CompletionEngine = require('../../app/completion.js'),
+var CompletionEngine = require('../../app/autocomplete/autocomplete.js'),
     objectsTable = require('../resources/symbol_tables/objects.json');
 
 
