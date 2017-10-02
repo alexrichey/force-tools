@@ -19,6 +19,3 @@ App.prototype.AutoComplete = function () {
 };
 
 module.exports = App;
-
-// var app = new App({username: 'alexr@richey-dev.com', pw: '4vrf5btg', token: 'Y1bTDOg1RJJX4qFNr9ASaj9u',
-//                    resourceDirectory: '/Users/alex/Dev/test'});
