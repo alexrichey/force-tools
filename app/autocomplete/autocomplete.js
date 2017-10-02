@@ -1,15 +1,8 @@
 var getQueries = require('./query'),
     _ = require('underscore');
 
-function CompletionEngine(args, fn) {
-  this.objectsSymbolTable = args.objectsSymbolTable;
-  this.classSymbolTable = args.classSymbolTable;
-
-  this.queryResources = {
-    objectsSymbolTable: this.objectsSymbolTable,
-    classSymbolTable: this.classSymbolTable
-  };
-
+function CompletionEngine(queryResources) {
+  this.queryResources = queryResources;
   this.finished = false;
   this.queries = [];
 }
